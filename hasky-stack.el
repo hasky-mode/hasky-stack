@@ -402,6 +402,33 @@ This uses `compile' internally."
    "init"
    args))
 
+(magit-define-popup hasky-stack-setup-popup
+  "Show popup for the \"stack setup\" command."
+  'hasky-stack
+  :switches '((?r "Reinstall"     "--reinstall")
+              (?c "Upgrade Cabal" "--upgrade-cabal"))
+  :actions  '((?s "Setup" hasky-stack-setup))
+  :default-action 'hasky-stack-setup)
+
+(defun hasky-stack-setup (ghc-version &optional args)
+  "Execute \"stack setup\" command to install GHC-VERSION with ARGS."
+  (interactive
+   (list (hasky-stack--completing-read
+          "GHC version: "
+          (list "implied"
+                "8.2.1"
+                "8.0.2"
+                "7.10.3"
+                "7.8.4"))
+         (hasky-stack-init-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "setup"
+   (unless (string= ghc-version "implied")
+     ghc-version)
+   args))
+
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
   'hasky-stack
@@ -426,8 +453,17 @@ This uses `compile' internally."
   :actions  '("Commands"
               (?b "Build" hasky-stack-build-popup)
               (?i "Init"  hasky-stack-init-popup)
+              (?s "Setup" hasky-stack-setup-popup)
+              (?u "Update" hasky-stack-update)
               (?c "Clean" hasky-stack-clean-popup))
   :default-action 'hasky-stack-build-popup)
+
+(defun hasky-stack-update ()
+  "Execute \"stack update\"."
+  (interactive)
+  (hasky-stack--exec-command
+   hasky-stack--last-directory
+   "update"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
