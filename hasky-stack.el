@@ -429,6 +429,29 @@ This uses `compile' internally."
      ghc-version)
    args))
 
+(magit-define-popup hasky-stack-upgrade-popup
+  "Show popup for the \"stack upgarde\" command."
+  'hasky-stack
+  :switches '((?s "Source only" "--source-only")
+              (?b "Binary only" "--binary-only")
+              (?f "Force download" "--force-download")
+              (?g "Git" "--git"))
+  :options  '((?p "Binary platform" "--binary-platform=")
+              (?v "Binary version" "--binary-version=")
+              (?r "Git repo" "--git-repo=" nil "https://github.com/commercialhaskell/stack"))
+  :actions  '((?g "Upgrade" hasky-stack-upgrade))
+  :default-action 'hasky-stack-upgrade)
+
+(defun hasky-stack-upgrade (&optional args)
+  "Execute \"stack upgrade\" command with ARGS."
+  (interactive
+   (list (hasky-stack-upgrade-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "upgrade"
+   args))
+
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
   'hasky-stack
@@ -451,11 +474,12 @@ This uses `compile' internally."
   "Show root popup with all the supported commands."
   'hasky-stack
   :actions  '("Commands"
-              (?b "Build" hasky-stack-build-popup)
-              (?i "Init"  hasky-stack-init-popup)
-              (?s "Setup" hasky-stack-setup-popup)
-              (?u "Update" hasky-stack-update)
-              (?c "Clean" hasky-stack-clean-popup))
+              (?b "Build"   hasky-stack-build-popup)
+              (?i "Init"    hasky-stack-init-popup)
+              (?s "Setup"   hasky-stack-setup-popup)
+              (?u "Update"  hasky-stack-update)
+              (?g "Upgrade" hasky-stack-upgrade-popup)
+              (?c "Clean"   hasky-stack-clean-popup))
   :default-action 'hasky-stack-build-popup)
 
 (defun hasky-stack-update ()
