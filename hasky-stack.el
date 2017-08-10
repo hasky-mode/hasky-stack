@@ -128,19 +128,21 @@ This is used by `hasky-stack--prepare'."
      hasky-stack--project-targets
      (append
       ;; library
-      (mapcar (lambda (_) (format "lib:%s" hasky-stack--project-name))
+      (mapcar (lambda (_) (format "%s:lib" hasky-stack--project-name))
               (hasky-stack--all-matches
                "^[[:blank:]]*library[[:blank:]]*"))
-      ;; executable
-      (mapcar (lambda (x) (format "exe:%s" x))
+      ;; executables
+      (mapcar (lambda (x) (format "%s:exe:%s" hasky-stack--project-name x))
               (hasky-stack--all-matches
                "^[[:blank:]]*executable[[:blank:]]+\\([[:word:]-]+\\)"))
       ;; test suites
-      (hasky-stack--all-matches
-       "^[[:blank:]]*test-suite[[:blank:]]+\\([[:word:]-]+\\)")
+      (mapcar (lambda (x) (format "%s:test:%s" hasky-stack--project-name x))
+              (hasky-stack--all-matches
+               "^[[:blank:]]*test-suite[[:blank:]]+\\([[:word:]-]+\\)"))
       ;; benchmarks
-      (hasky-stack--all-matches
-       "^[[:blank:]]*benchmark[[:blank:]]+\\([[:word:]-]+\\)")))))
+      (mapcar (lambda (x) (format "%s:bench:%s" hasky-stack--project-name x))
+              (hasky-stack--all-matches
+               "^[[:blank:]]*benchmark[[:blank:]]+\\([[:word:]-]+\\)"))))))
 
 (defun hasky-stack--find-dir-of-file (regexp)
   "Find file whose name satisfies REGEXP traversing upwards.
