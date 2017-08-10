@@ -45,6 +45,14 @@
   :link   '(url-link :tag "GitHub"
                      "https://github.com/hasky-mode/hasky-stack"))
 
+(defface hasky-stack-project-name
+  '((t (:inherit font-lock-function-name-face)))
+  "Face used to display name of current project.")
+
+(defface hasky-project-version
+  '((t (:inherit font-lock-doc-face)))
+  "Face used to display version of current project.")
+
 (defvar hasky-stack--last-directory nil
   "Path to project's directory last time `hasky-stack--prepare' was called.
 
@@ -523,7 +531,17 @@ This uses `compile' internally."
 (magit-define-popup hasky-stack-root-popup
   "Show root popup with all the supported commands."
   'hasky-stack
-  :actions  '("Commands"
+  :actions  '((lambda ()
+                (concat
+                 (propertize hasky-stack--project-name
+                             'face 'hasky-stack-project-name)
+                 " "
+                 (propertize hasky-stack--project-version
+                             'face 'hasky-project-version)
+                 "\n\n"
+                 (propertize "Commands"
+                             'face 'magit-popup-heading)
+                 "\n"))
               (?b "Build"   hasky-stack-build-popup)
               (?i "Init"    hasky-stack-init-popup)
               (?s "Setup"   hasky-stack-setup-popup)
@@ -533,7 +551,8 @@ This uses `compile' internally."
               (?d "SDist"   hasky-stack-sdist-popup)
               (?x "Exec"    hasky-stack-exec)
               (?c "Clean"   hasky-stack-clean-popup))
-  :default-action 'hasky-stack-build-popup)
+  :default-action 'hasky-stack-build-popup
+  :max-action-columns 3)
 
 (defun hasky-stack-update ()
   "Execute \"stack update\"."
