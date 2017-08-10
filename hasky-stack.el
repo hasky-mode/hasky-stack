@@ -98,6 +98,11 @@ being used to compose command line."
   :tag  "Completing Function"
   :type '(radio (function-item completing-read)))
 
+(defcustom hasky-stack-ghc-versions '("8.2.1" "8.0.2" "7.10.3" "7.8.4")
+  "GHC versions to pick from (for commands like \"stack setup\")."
+  :tag  "GHC versions"
+  :type '(repeat (string :tag "Extension name")))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various utilities
@@ -425,11 +430,8 @@ This uses `compile' internally."
   (interactive
    (list (hasky-stack--completing-read
           "GHC version: "
-          (list "implied-by-resolver"
-                "8.2.1"
-                "8.0.2"
-                "7.10.3"
-                "7.8.4")
+          (cons "implied-by-resolver"
+                hasky-stack-ghc-versions)
           t)
          (hasky-stack-setup-arguments)))
   (apply
