@@ -420,7 +420,7 @@ This uses `compile' internally."
                 "8.0.2"
                 "7.10.3"
                 "7.8.4"))
-         (hasky-stack-init-arguments)))
+         (hasky-stack-setup-arguments)))
   (apply
    #'hasky-stack--exec-command
    hasky-stack--last-directory
