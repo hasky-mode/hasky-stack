@@ -6,7 +6,6 @@
 (package-file "hasky-stack.el")
 
 (development
- (depends-on "avy-menu")
  (depends-on "f")
  (depends-on "magit-popup")
 

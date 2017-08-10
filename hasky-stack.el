@@ -5,7 +5,7 @@
 ;; Author: Mark Karpov <markkarpov92@gmail.com>
 ;; URL: https://github.com/hasky-mode/hasky-stack
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.4") (avy-menu "0.2") (f "0.18.0") (magit-popup "20170214.347"))
+;; Package-Requires: ((emacs "24.4") (f "0.18.0") (magit-popup "20170214.347"))
 ;; Keywords: programming, haskell
 ;;
 ;; This file is not part of GNU Emacs.
@@ -29,7 +29,6 @@
 
 ;;; Code:
 
-(require 'avy-menu)
 (require 'cl-lib)
 (require 'f)
 (require 'magit-popup)
@@ -383,6 +382,26 @@ This uses `compile' internally."
    "haddock"
    args))
 
+(magit-define-popup hasky-stack-init-popup
+  "Show popup for the \"stack init\" command."
+  'hasky-stack
+  :switches '((?s "Solver"         "--solver")
+              (?o "Omit packages"  "--omit-packages")
+              (?f "Force"          "--force")
+              (?i "Ignore subdirs" "--ignore-subdirs"))
+  :actions  '((?i "Init" hasky-stack-init))
+  :default-action 'hasky-stack-init)
+
+(defun hasky-stack-init (&optional args)
+  "Execute \"stack init\" with ARGS."
+  (interactive
+   (list (hasky-stack-init-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "init"
+   args))
+
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
   'hasky-stack
@@ -391,7 +410,7 @@ This uses `compile' internally."
   :default-action 'hasky-stack-clean)
 
 (defun hasky-stack-clean (&optional args)
-  "Execute \"stack clean\" command for TARGET with ARGS."
+  "Execute \"stack clean\" command with ARGS."
   (interactive
    (list (hasky-stack-build-arguments)))
   (apply
@@ -401,41 +420,31 @@ This uses `compile' internally."
    hasky-stack--project-name
    args))
 
+(magit-define-popup hasky-stack-root-popup
+  "Show root popup with all the supported commands."
+  'hasky-stack
+  :actions  '("Commands"
+              (?b "Build" hasky-stack-build-popup)
+              (?i "Init"  hasky-stack-init-popup)
+              (?c "Clean" hasky-stack-clean-popup))
+  :default-action 'hasky-stack-build-popup)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; High-level interface
 
 ;;;###autoload
-;; (defun hasky-stack-execute (&optional command)
-;;   "Perform cabal command COMMAND.
-
-;; When called interactively or when COMMAND is NIL, propose to
-;; choose command with `ebal-select-command-function'."
-;;   (interactive)
-;;   (if (ebal--target-executable)
-;;       (if (ebal--prepare)
-;;           (let* ((command-alist
-;;                   (if (ebal--cabal-mode-p)
-;;                       ebal--cabal-command-alist
-;;                     ebal--stack-command-alist))
-;;                  (command
-;;                   (or command
-;;                       (intern
-;;                        (funcall
-;;                         ebal-select-command-function
-;;                         "Choose command: "
-;;                         (mapcar (lambda (x) (symbol-name (car x)))
-;;                                 command-alist)
-;;                         nil
-;;                         t))))
-;;                  (fnc (cdr (assq command command-alist))))
-;;             (when fnc
-;;               (funcall fnc)))
-;;         (message "Cannot locate ‘.cabal’ file."))
-;;     (message "Cannot local Cabal executable on this system.")))
+(defun hasky-stack-execute ()
+  "Show the root-level popup allowing to choose and run a Stack command."
+  (interactive)
+  (if (hasky-stack--executable)
+      (if (ebal--prepare)
+          (hasky-stack-root-popup)
+        (message "Cannot locate ‘.cabal’ file"))
+    (message "Cannot locate Stack executable on this system")))
 
 ;;;###autoload
-(defun hasky-stack-init (project-name template)
+(defun hasky-stack-new (project-name template)
   "Initialize the current directory by using a Stack template.
 
 PROJECT-NAME is the name of project and TEMPLATE is quite
