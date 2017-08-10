@@ -96,7 +96,7 @@ being used to compose command line."
 ;; Various utilities
 
 (defun hasky-stack--all-matches (regexp)
-  "Return list of all stirngs matching REGEXP in current buffer."
+  "Return list of all stings matching REGEXP in current buffer."
   (let (matches)
     (goto-char (point-min))
     (while (re-search-forward regexp nil t)
@@ -175,9 +175,42 @@ failure.  Returned path is guaranteed to have trailing slash."
     (shell-command
      (format "%s templates"
              (hasky-stack--executable))
-     (current-buffer)
-     (remove "Template"
-             (hasky-stack--all-matches "^\\(\\([[:alnum:]]\\|-\\)+\\)")))))
+     (current-buffer))
+    (remove "Template"
+            (hasky-stack--all-matches "^\\(\\([[:alnum:]]\\|-\\)+\\)"))))
+
+(defun hasky-stack--completing-read (prompt &optional collection require-match)
+  "Read user's input using `hasky-stack-read-function'.
+
+PROMPT is the prompt to show and COLLECTION represents valid
+choices.  If REQUIRE-MATCH is not NIL, don't let user input
+something different from items in COLLECTION.
+
+COLLECTION is allowed to be a string, in this case it's
+automatically wrapped to make it one-element list.
+
+If COLLECTION contains \"none\", and user selects it, interpret
+it as NIL.  If user aborts entering of the input, return NIL.
+
+Finally, if COLLECTION is nil, plain `read-string' is used."
+  (let* ((collection
+          (if (listp collection)
+              collection
+            (list collection)))
+         (result
+          (if collection
+              (funcall hasky-stack-read-function
+                       prompt
+                       collection
+                       nil
+                       require-match
+                       nil
+                       nil
+                       (car collection))
+            (read-string prompt))))
+    (unless (and (string= result "none")
+                 (member result collection))
+      result)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -241,13 +274,13 @@ Result is expected to be used as argument of `compile'."
   (mapconcat
    #'identity
    (append
-    (list (shell-quote-argument (ebal--target-executable))
+    (list (shell-quote-argument (hasky-stack--executable))
           command)
     (mapcar #'shell-quote-argument
             (remove nil args)))
    " "))
 
-(defun ebal--call-target (dir command &rest args)
+(defun hasky-stack--exec-command (dir command &rest args)
   "Call target as if from DIR performing COMMAND with arguments ARGS.
 
 Arguments are quoted if necessary and NIL arguments are ignored.
@@ -260,184 +293,170 @@ This uses `compile' internally."
                     (replace-regexp-in-string
                      "[[:space:]]"
                      "-"
-                     ebal--project-name))
-                   (if (ebal--cabal-mode-p) "cabal" "stack")))))
-    (compile
-     (mapconcat
-      #'identity
-      (append
-       (reverse ebal--pre-commands)
-       (list (apply #'ebal--format-command command args))
-       (reverse ebal--post-commands))
-      " && "))
-    (setq ebal--pre-commands  nil
-          ebal--post-commands nil)
+                     hasky-stack--project-name))
+                   "stack"))))
+    (compile (apply #'hasky-stack--format-command command args))
     nil))
-
-(defun ebal--perform-command (command &rest args)
-  "Perform target command COMMAND.
-
-This function should be called in “prepared” environment, where
-`ebal--actual-command' is bound to name of executing command.
-
-If argument ARGS is given, its elements will be quoted and added
-to command line.
-
-This is low-level operation, it doesn't run `ebal--prepare', thus
-it cannot be used on its own by user."
-  (run-hooks ebal-before-command-hook)
-  (apply #'ebal--call-target
-         ebal--last-directory
-         command
-         (append
-          (cdr (assq ebal--actual-command
-                     ebal-global-option-alist))
-          (cdr (assq ebal--actual-command
-                     ebal-project-option-alist))
-          args))
-  (run-hooks ebal-after-command-hook))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Popups
 
-;; TODO
+(magit-define-popup hasky-stack-build-popup
+  "Show popup for the \"stack build\" command."
+  'hasky-stack
+  :switches '((?r "Dry run"           "--dry-run")
+              (?t "Pedantic"          "--pedantic")
+              (?f "Fast"              "--fast")
+              (?s "Only snapshot"     "--only-snapshot")
+              (?d "Only dependencies" "--only-dependencies")
+              (?p "Profile"           "--profile")
+              (?c "Coverage"          "--coverage")
+              (?b "Copy bins"         "--copy-bins")
+              (?l "Library profiling" "--library-profiling")
+              (?e "Executable profiling" "--executable-profiling"))
+  :options  '((?o "GHC options" "--ghc-options=")
+              (?e "Exec"        "--exec=")
+              (?b "Benchmark arguments" "--benchmark-arguments=")
+              (?t "Test arguments"      "--test-arguments=")
+              (?h "Haddock arguments"   "--haddock-arguments="))
+  :actions  '((?b "Build"   hasky-stack-build)
+              (?e "Bench"   hasky-stack-bench)
+              (?t "Test"    hasky-stack-test)
+              (?h "Haddock" hasky-stack-haddock))
+  :default-action 'hasky-stack-build)
+
+(defun hasky-stack-build (target &optional args)
+  "Execute \"stack build\" command for TARGET with ARGS."
+  (interactive
+   (list (hasky-stack--completing-read
+          "Build target: "
+          (cons hasky-stack--project-name
+                hasky-stack--project-targets))
+         (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "build"
+   target
+   args))
+
+(defun hasky-stack-bench (target &optional args)
+  "Execute \"stack bench\" command for TARGET with ARGS."
+  (interactive
+   (list (hasky-stack--completing-read
+          "Bench target: "
+          (cons hasky-stack--project-name
+                hasky-stack--project-targets))
+         (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "bench"
+   target
+   args))
+
+(defun hasky-stack-test (target &optional args)
+  "Execute \"stack test\" command for TARGET with ARGS."
+  (interactive
+   (list (hasky-stack--completing-read
+          "Test target: "
+          (cons hasky-stack--project-name
+                hasky-stack--project-targets))
+         (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "test"
+   target
+   args))
+
+(defun hasky-stack-haddock (&optional args)
+  "Execute \"stack haddock\" command for TARGET with ARGS."
+  (interactive
+   (list (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "haddock"
+   args))
+
+(magit-define-popup hasky-stack-clean-popup
+  "Show popup for the \"stack clean\" command."
+  'hasky-stack
+  :switches '((?f "Full"  "--full"))
+  :actions  '((?c "Clean" hasky-stack-clean))
+  :default-action 'hasky-stack-clean)
+
+(defun hasky-stack-clean (&optional args)
+  "Execute \"stack clean\" command for TARGET with ARGS."
+  (interactive
+   (list (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "clean"
+   hasky-stack--project-name
+   args))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; High-level interface
 
 ;;;###autoload
-(defun ebal-execute (&optional command)
-  "Perform cabal command COMMAND.
+;; (defun hasky-stack-execute (&optional command)
+;;   "Perform cabal command COMMAND.
 
-When called interactively or when COMMAND is NIL, propose to
-choose command with `ebal-select-command-function'."
-  (interactive)
-  (if (ebal--target-executable)
-      (if (ebal--prepare)
-          (let* ((command-alist
-                  (if (ebal--cabal-mode-p)
-                      ebal--cabal-command-alist
-                    ebal--stack-command-alist))
-                 (command
-                  (or command
-                      (intern
-                       (funcall
-                        ebal-select-command-function
-                        "Choose command: "
-                        (mapcar (lambda (x) (symbol-name (car x)))
-                                command-alist)
-                        nil
-                        t))))
-                 (fnc (cdr (assq command command-alist))))
-            (when fnc
-              (funcall fnc)))
-        (message "Cannot locate ‘.cabal’ file."))
-    (message "Cannot local Cabal executable on this system.")))
+;; When called interactively or when COMMAND is NIL, propose to
+;; choose command with `ebal-select-command-function'."
+;;   (interactive)
+;;   (if (ebal--target-executable)
+;;       (if (ebal--prepare)
+;;           (let* ((command-alist
+;;                   (if (ebal--cabal-mode-p)
+;;                       ebal--cabal-command-alist
+;;                     ebal--stack-command-alist))
+;;                  (command
+;;                   (or command
+;;                       (intern
+;;                        (funcall
+;;                         ebal-select-command-function
+;;                         "Choose command: "
+;;                         (mapcar (lambda (x) (symbol-name (car x)))
+;;                                 command-alist)
+;;                         nil
+;;                         t))))
+;;                  (fnc (cdr (assq command command-alist))))
+;;             (when fnc
+;;               (funcall fnc)))
+;;         (message "Cannot locate ‘.cabal’ file."))
+;;     (message "Cannot local Cabal executable on this system.")))
 
 ;;;###autoload
-(defun ebal-init ()
-  "Create a .cabal, Setup.hs, and optionally a LICENSE file interactively.
+(defun hasky-stack-init (project-name template)
+  "Initialize the current directory by using a Stack template.
 
-It's also possible to use a Stack template.  Note that in any
-case you should first create directory for your project and only
-then call this command."
-  (interactive)
-  (if (ebal--prepare)
-      (message "The directory is already Cabalized, it seems")
-    (run-hooks ebal-before-init-hook)
-    (setq ebal--init-aborted           nil
-          ebal--init-template-selected nil)
-    (let* ((ebal--project-name
-            (ebal--init-query
-             "Package name: "
-             (file-name-nondirectory
-              (directory-file-name
-               default-directory))))
-           (template
-            (when (ebal--stack-mode-p)
-              (let ((result
-                     (ebal--init-query
-                      "Use template: "
-                      (cons "none" (ebal--stack-templates)))))
-                (when result
-                  (setq ebal--init-template-selected t)
-                  result))))
-           (ebal--project-version
-            (ebal--init-query "Initial version: " "0.1.0"))
-           (license
-            (ebal--init-query
-             "License: "
-             '("none" "GPL-2" "GPL-3" "LGPL-2.1" "LGPL-3" "AGPL-3"
-               "BSD2" "BSD3" "MIT" "ISC" "MPL-2.0" "Apache-2.0"
-               "PublicDomain" "AllRightsReserved")
-             t))
-           (author (ebal--init-query "Author name: " user-full-name))
-           (email (ebal--init-query "Maintainer email: " user-mail-address))
-           (homepage (ebal--init-query "Project homepage URL: "))
-           (synopsis (ebal--init-query "Synopsis: "))
-           (category
-            (ebal--init-query
-             "Category: "
-             '("none" "Codec" "Concurrency" "Control" "Data" "Database"
-               "Development" "Distribution" "Game" "Graphics" "Language"
-               "Math" "Network" "Sound" "System" "Testing" "Text" "Web")
-             t))
-           (type
-            (ebal--init-query
-             "What does the package build: "
-             '("Library" "Executable")
-             t))
-           (main-is
-            (when (string-equal type "Executable")
-              (ebal--init-query
-               "What is the main module of the executable: "
-               '("Main.hs" "Main.lhs"))))
-           (language
-            (ebal--init-query
-             "What base language is the package written in: "
-             '("Haskell2010" "Haskell98")
-             t))
-           (source-dir
-            (ebal--init-query
-             "Source directory: "
-             '("src" "none"))))
-      (unless ebal--init-aborted
-        (ebal--ensure-sandbox-exists default-directory 'after)
-        (if ebal--init-template-selected
-            ;; Stack template
-            (ebal--call-target
-             default-directory
-             "new"
-             "--bare"
-             ebal--project-name
-             template)
-          ;; Cabal init
-          (ebal--ensure-stack-init default-directory 'after)
-          (let ((ebal-operation-mode 'cabal))
-            (ebal--call-target
-             default-directory
-             "init"
-             "--non-interactive"
-             (ebal--form-arg "--package-name" ebal--project-name)
-             (ebal--form-arg "--version"      ebal--project-version)
-             (ebal--form-arg "--license"      license)
-             (ebal--form-arg "--author"       author)
-             (ebal--form-arg "--email"        email)
-             (ebal--form-arg "--homepage"     homepage)
-             (ebal--form-arg "--synopsis"     synopsis)
-             (ebal--form-arg "--category"     category)
-             (cl-case type
-               ("Library"    "--is-library")
-               ("Executable" "--is-executable"))
-             (ebal--form-arg "--main-is"      main-is)
-             (ebal--form-arg "--language"     language)
-             (ebal--form-arg "--source-dir"   source-dir)
-             (unless (y-or-n-p
-                      "Include documentation on what each field means? ")
-               "--no-comments"))))))
-    (run-hooks ebal-after-init-hook)))
+PROJECT-NAME is the name of project and TEMPLATE is quite
+obviously template name."
+  (interactive
+   (list (hasky-stack--completing-read
+          "Project name: "
+          (file-name-nondirectory
+           (directory-file-name
+            default-directory)))
+         (hasky-stack--completing-read
+          "Use template: "
+          (cons "none" (hasky-stack--templates))
+          t)))
+  (if (hasky-stack--prepare)
+      (message "The directory is already initialized, it seems")
+    (let ((hasky-stack--project-name project-name))
+      (hasky-stack--exec-command
+       default-directory
+       "new"
+       "--bare"
+       project-name
+       template))))
 
 (provide 'hasky-stack)
 
