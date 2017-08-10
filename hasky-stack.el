@@ -452,6 +452,55 @@ This uses `compile' internally."
    "upgrade"
    args))
 
+(magit-define-popup hasky-stack-upload-popup
+  "Show popup for the \"stack upload\" command."
+  'hasky-stack
+  :switches '((?i "Ignore check" "--ignore-check")
+              (?n "No signature" "--no-signature" t) ;; FIXME
+              (?t "Test tarball" "--test-tarball"))
+  :options  '((?s "Sig server" "--sig-server="))
+  :actions  '((?p "Upload" hasky-stack-upload))
+  :default-action 'hasky-stack-upload)
+
+(defun hasky-stack-upload (&optional args)
+  "Execute \"stack upload\" command with ARGS."
+  (interactive
+   (list (hasky-stack-upload-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "upload"
+   args))
+
+(magit-define-popup hasky-stack-sdist-popup
+  "Show popup for the \"stack sdist\" command."
+  'hasky-stack
+  :switches '((?i "Ignore check" "--ignore-check")
+              (?s "Sign"         "--sign")
+              (?t "Test tarball" "--test-tarball"))
+  :options  '((?s "Sig server"   "--sig-server="))
+  :actions  '((?d "SDist" hasky-stack-sdist))
+  :default-action 'hasky-stack-sdist)
+
+(defun hasky-stack-sdist (&optional args)
+  "Execute \"stack sdist\" command with ARGS."
+  (interactive
+   (list (hasky-stack-sdist-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack--last-directory
+   "sdist"
+   args))
+
+(defun hasky-stack-exec (cmd)
+  "Execute \"stack exec\" command running CMD."
+  (interactive
+   (list (read-string "Command to run: ")))
+  (hasky-stack--exec-command
+   hasky-stack--last-directory
+   "exec"
+   cmd))
+
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
   'hasky-stack
@@ -479,6 +528,9 @@ This uses `compile' internally."
               (?s "Setup"   hasky-stack-setup-popup)
               (?u "Update"  hasky-stack-update)
               (?g "Upgrade" hasky-stack-upgrade-popup)
+              (?p "Upload"  hasky-stack-upload-popup)
+              (?d "SDist"   hasky-stack-sdist-popup)
+              (?x "Exec"    hasky-stack-exec)
               (?c "Clean"   hasky-stack-clean-popup))
   :default-action 'hasky-stack-build-popup)
 
