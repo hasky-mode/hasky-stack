@@ -430,7 +430,7 @@ This uses `compile' internally."
    args))
 
 (magit-define-popup hasky-stack-upgrade-popup
-  "Show popup for the \"stack upgarde\" command."
+  "Show popup for the \"stack upgrade\" command."
   'hasky-stack
   :switches '((?s "Source only" "--source-only")
               (?b "Binary only" "--binary-only")
@@ -438,8 +438,9 @@ This uses `compile' internally."
               (?g "Git" "--git"))
   :options  '((?p "Binary platform" "--binary-platform=")
               (?v "Binary version" "--binary-version=")
-              (?r "Git repo" "--git-repo=" nil "https://github.com/commercialhaskell/stack"))
+              (?r "Git repo" "--git-repo="))
   :actions  '((?g "Upgrade" hasky-stack-upgrade))
+  :default-arguments '("--git-repo=https://github.com/commercialhaskell/stack")
   :default-action 'hasky-stack-upgrade)
 
 (defun hasky-stack-upgrade (&optional args)
@@ -456,10 +457,11 @@ This uses `compile' internally."
   "Show popup for the \"stack upload\" command."
   'hasky-stack
   :switches '((?i "Ignore check" "--ignore-check")
-              (?n "No signature" "--no-signature" t) ;; FIXME
+              (?n "No signature" "--no-signature")
               (?t "Test tarball" "--test-tarball"))
   :options  '((?s "Sig server" "--sig-server="))
   :actions  '((?p "Upload" hasky-stack-upload))
+  :default-arguments '("--no-signature")
   :default-action 'hasky-stack-upload)
 
 (defun hasky-stack-upload (&optional args)
@@ -550,7 +552,7 @@ This uses `compile' internally."
   "Show the root-level popup allowing to choose and run a Stack command."
   (interactive)
   (if (hasky-stack--executable)
-      (if (ebal--prepare)
+      (if (hasky-stack--prepare)
           (hasky-stack-root-popup)
         (message "Cannot locate ‘.cabal’ file"))
     (message "Cannot locate Stack executable on this system")))
