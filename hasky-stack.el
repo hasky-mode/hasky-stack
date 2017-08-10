@@ -340,7 +340,8 @@ This uses `compile' internally."
    (list (hasky-stack--completing-read
           "Build target: "
           (cons hasky-stack--project-name
-                hasky-stack--project-targets))
+                hasky-stack--project-targets)
+          t)
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -355,7 +356,8 @@ This uses `compile' internally."
    (list (hasky-stack--completing-read
           "Bench target: "
           (cons hasky-stack--project-name
-                hasky-stack--project-targets))
+                hasky-stack--project-targets)
+          t)
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -370,7 +372,8 @@ This uses `compile' internally."
    (list (hasky-stack--completing-read
           "Test target: "
           (cons hasky-stack--project-name
-                hasky-stack--project-targets))
+                hasky-stack--project-targets)
+          t)
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -422,17 +425,18 @@ This uses `compile' internally."
   (interactive
    (list (hasky-stack--completing-read
           "GHC version: "
-          (list "implied"
+          (list "implied-by-resolver"
                 "8.2.1"
                 "8.0.2"
                 "7.10.3"
-                "7.8.4"))
+                "7.8.4")
+          t)
          (hasky-stack-setup-arguments)))
   (apply
    #'hasky-stack--exec-command
    hasky-stack--last-directory
    "setup"
-   (unless (string= ghc-version "implied")
+   (unless (string= ghc-version "implied-by-resolver")
      ghc-version)
    args))
 
