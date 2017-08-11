@@ -511,10 +511,18 @@ This uses `compile' internally."
   "Execute \"stack exec\" command running CMD."
   (interactive
    (list (read-string "Command to run: ")))
-  (hasky-stack--exec-command
-   hasky-stack--last-directory
-   "exec"
-   cmd))
+  (cl-destructuring-bind (app . args)
+      (progn
+        (string-match
+         "^[[:blank:]]*\\(?1:[^[:blank:]]+\\)[[:blank:]]*\\(?2:.*\\)$"
+         cmd)
+        (cons (match-string 1 cmd)
+              (match-string 2 cmd)))
+    (hasky-stack--exec-command
+     hasky-stack--last-directory
+     (if (string= args "")
+         (concat "exec " app)
+       (concat "exec " app " -- " args)))))
 
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
