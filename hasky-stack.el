@@ -6,7 +6,7 @@
 ;; URL: https://github.com/hasky-mode/hasky-stack
 ;; Version: 0.1.0
 ;; Package-Requires: ((emacs "24.4") (f "0.18.0") (magit-popup "20170214.347"))
-;; Keywords: programming, haskell
+;; Keywords: tools, haskell
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
