@@ -113,6 +113,11 @@ being used to compose command line."
   :tag  "GHC versions"
   :type '(repeat (string :tag "Extension name")))
 
+(defcustom hasky-stack-auto-target nil
+  "Whether to automatically select the default build target."
+  :tag  "Build auto-target"
+  :type 'boolean)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various utilities
@@ -236,6 +241,15 @@ Finally, if COLLECTION is nil, plain `read-string' is used."
                  (member result collection))
       result)))
 
+(defun hasky-stack--select-target (prompt)
+  "Present the user with a choice of build target using PROMPT."
+  (if hasky-stack-auto-target
+      hasky-stack--project-name
+    (hasky-stack--completing-read
+     prompt
+     (cons hasky-stack--project-name
+           hasky-stack--project-targets)
+     t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Preparation
@@ -352,11 +366,7 @@ This uses `compile' internally."
 (defun hasky-stack-build (target &optional args)
   "Execute \"stack build\" command for TARGET with ARGS."
   (interactive
-   (list (hasky-stack--completing-read
-          "Build target: "
-          (cons hasky-stack--project-name
-                hasky-stack--project-targets)
-          t)
+   (list (hasky-stack--select-target "Build target: ")
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -368,11 +378,7 @@ This uses `compile' internally."
 (defun hasky-stack-bench (target &optional args)
   "Execute \"stack bench\" command for TARGET with ARGS."
   (interactive
-   (list (hasky-stack--completing-read
-          "Bench target: "
-          (cons hasky-stack--project-name
-                hasky-stack--project-targets)
-          t)
+   (list (hasky-stack--select-target "Bench target: ")
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -384,11 +390,7 @@ This uses `compile' internally."
 (defun hasky-stack-test (target &optional args)
   "Execute \"stack test\" command for TARGET with ARGS."
   (interactive
-   (list (hasky-stack--completing-read
-          "Test target: "
-          (cons hasky-stack--project-name
-                hasky-stack--project-targets)
-          t)
+   (list (hasky-stack--select-target "Test target: ")
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command

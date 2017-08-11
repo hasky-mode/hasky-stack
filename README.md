@@ -34,6 +34,11 @@ Bind just two commands, like this:
 There are a number of customization options that are available via <kbd>M-x
 customize-group hasky-stack</kbd>.
 
+One especially useful feature not enabled by default is
+`hasky-stack-auto-target`. When it's not `nil`, `hasky-stack` won't ask you
+build/test target using the default automatically (this is what you almost
+always want anyway).
+
 ## License
 
 Copyright © 2017 Mark Karpov
