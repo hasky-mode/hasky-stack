@@ -4,8 +4,8 @@
 [![MELPA](https://melpa.org/packages/hasky-stack-badge.svg)](https://melpa.org/#/hasky-stack)
 [![Build Status](https://travis-ci.org/hasky-mode/hasky-stack.svg?branch=master)](https://travis-ci.org/hasky-mode/hasky-stack)
 
-Interface to the [Stack](https://haskellstack.org) Haskell development tool.
-Proper description pending.
+This is an interface to the [Stack](https://haskellstack.org) Haskell
+development tool.
 
 ## Installation
 
@@ -16,7 +16,23 @@ TODO: put here MELPA instructions once it's in MELPA.
 
 ## Usage
 
-Pending.
+Bind just two commands, like this:
+
+```emacs-lisp
+(global-set-key (kbd "<next> h e") #'hasky-stack-execute)
+(global-set-key (kbd "<next> h i") #'hasky-stack-new)
+```
+
+* `hasky-stack-execute` opens a popup with a collection of stack commands
+  you can run. Many commands have their own popups like in Magit.
+
+* `hasky-stack-new` allows to create a new project in current directory
+  using a Stack template.
+
+## Customization
+
+There are a number of customization options that are available via <kbd>M-x
+customize-group hasky-stack</kbd>.
 
 ## License
 
