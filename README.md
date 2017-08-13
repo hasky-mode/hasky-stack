@@ -12,7 +12,8 @@ development tool.
 Download this package and place it somewhere, so Emacs can see it. Then put
 `(require 'hasky-stack)` into your configuration file. Done!
 
-TODO: put here MELPA instructions once it's in MELPA.
+It's available via MELPA, so you can just <kbd>M-x package-install RET
+hasky-stack</kbd>.
 
 ## Usage
 
