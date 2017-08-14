@@ -497,6 +497,7 @@ This uses `compile' internally."
    #'hasky-stack--exec-command
    hasky-stack--last-directory
    "upload"
+   "."
    args))
 
 (magit-define-popup hasky-stack-sdist-popup
