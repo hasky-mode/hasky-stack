@@ -346,6 +346,7 @@ This uses `compile' internally."
   :switches '((?r "Dry run"           "--dry-run")
               (?t "Pedantic"          "--pedantic")
               (?f "Fast"              "--fast")
+              (?F "File watch"        "--file-watch")
               (?s "Only snapshot"     "--only-snapshot")
               (?d "Only dependencies" "--only-dependencies")
               (?p "Profile"           "--profile")
