@@ -548,13 +548,14 @@ This uses `compile' internally."
 (defun hasky-stack-clean (&optional args)
   "Execute \"stack clean\" command with ARGS."
   (interactive
-   (list (hasky-stack-build-arguments)))
+   (list (hasky-stack-clean-arguments)))
   (apply
    #'hasky-stack--exec-command
    hasky-stack--last-directory
    "clean"
-   hasky-stack--project-name
-   args))
+   (if (member "--full" args)
+       args
+     (list hasky-stack--project-name))))
 
 (magit-define-popup hasky-stack-root-popup
   "Show root popup with all the supported commands."
