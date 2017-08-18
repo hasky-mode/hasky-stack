@@ -118,6 +118,11 @@ being used to compose command line."
   :tag  "Build auto-target"
   :type 'boolean)
 
+(defcustom hasky-stack-auto-open-coverage-reports nil
+  "Whether to attempt to automatically open coverage report in browser."
+  :tag  "Automatically open coverage reports"
+  :type 'boolean)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various utilities
@@ -377,7 +382,15 @@ This uses `compile' internally."
                    ,(hasky-stack--acp
                      #'hasky-stack--format-bool-variable
                      'hasky-stack-auto-target
-                     "auto target")))
+                     "auto target"))
+               (?c "auto-open-coverage-reports"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-open-coverage-reports)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-open-coverage-reports
+                     "auto open coverage reports")))
   :switches '((?r "Dry run"           "--dry-run")
               (?t "Pedantic"          "--pedantic")
               (?f "Fast"              "--fast")
@@ -663,6 +676,26 @@ obviously template name."
        "--bare"
        project-name
        template))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setting up post-compilation magic
+
+(defun hasky-stack--compilation-finish-function (buffer str)
+  "Function that is called when a compilation process in BUFFER finishes.
+
+STR describes how the process finished."
+  (when (and (string-match "^\\*.*-stack\\*$" (buffer-name buffer))
+             (string= str "finished\n"))
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (when (and hasky-stack-auto-open-coverage-reports
+                 (re-search-forward
+                  "^The coverage report for .+'s test-suite \".+\" is available at \\(.*\\)$" nil t))
+        (browse-url (match-string-no-properties 1))))))
+
+(add-to-list 'compilation-finish-functions
+             #'hasky-stack--compilation-finish-function)
 
 (provide 'hasky-stack)
 
