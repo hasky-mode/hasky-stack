@@ -338,11 +338,46 @@ This uses `compile' internally."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Variables
+
+(defun hasky-stack--cycle-bool-variable (symbol)
+  "Cycle value of variable named SYMBOL."
+  (custom-set-variables
+   (list symbol (not (symbol-value symbol)))))
+
+(defun hasky-stack--format-bool-variable (symbol label)
+  "Format a Boolean variable named SYMBOL, label it as LABEL."
+  (let ((val (symbol-value symbol)))
+    (concat
+     (format "%s " label)
+     (propertize
+      (if val "enabled" "disabled")
+      'face
+      (if val
+          'magit-popup-option-value
+        'magit-popup-disabled-argument)))))
+
+(defun hasky-stack--acp (fun &rest args)
+  "Apply FUN to ARGS partially and return a command."
+  (lambda (&rest args2)
+    (interactive)
+    (apply fun (append args args2))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Popups
 
 (magit-define-popup hasky-stack-build-popup
   "Show popup for the \"stack build\" command."
   'hasky-stack
+  :variables `((?a "auto-target"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-target)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-target
+                     "auto target")))
   :switches '((?r "Dry run"           "--dry-run")
               (?t "Pedantic"          "--pedantic")
               (?f "Fast"              "--fast")
@@ -569,8 +604,7 @@ This uses `compile' internally."
                              'face 'hasky-project-version)
                  "\n\n"
                  (propertize "Commands"
-                             'face 'magit-popup-heading)
-                 "\n"))
+                             'face 'magit-popup-heading)))
               (?b "Build"   hasky-stack-build-popup)
               (?i "Init"    hasky-stack-init-popup)
               (?s "Setup"   hasky-stack-setup-popup)
