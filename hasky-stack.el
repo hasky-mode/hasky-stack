@@ -118,6 +118,11 @@ being used to compose command line."
   :tag  "Build auto-target"
   :type 'boolean)
 
+(defcustom hasky-stack-auto-open-coverage-reports nil
+  "Whether to attempt to automatically open coverage report in browser."
+  :tag  "Automatically open coverage reports"
+  :type 'boolean)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various utilities
@@ -338,11 +343,54 @@ This uses `compile' internally."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Variables
+
+(defun hasky-stack--cycle-bool-variable (symbol)
+  "Cycle value of variable named SYMBOL."
+  (custom-set-variables
+   (list symbol (not (symbol-value symbol)))))
+
+(defun hasky-stack--format-bool-variable (symbol label)
+  "Format a Boolean variable named SYMBOL, label it as LABEL."
+  (let ((val (symbol-value symbol)))
+    (concat
+     (format "%s " label)
+     (propertize
+      (if val "enabled" "disabled")
+      'face
+      (if val
+          'magit-popup-option-value
+        'magit-popup-disabled-argument)))))
+
+(defun hasky-stack--acp (fun &rest args)
+  "Apply FUN to ARGS partially and return a command."
+  (lambda (&rest args2)
+    (interactive)
+    (apply fun (append args args2))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Popups
 
 (magit-define-popup hasky-stack-build-popup
   "Show popup for the \"stack build\" command."
   'hasky-stack
+  :variables `((?a "auto-target"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-target)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-target
+                     "auto target"))
+               (?c "auto-open-coverage-reports"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-open-coverage-reports)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-open-coverage-reports
+                     "auto open coverage reports")))
   :switches '((?r "Dry run"           "--dry-run")
               (?t "Pedantic"          "--pedantic")
               (?f "Fast"              "--fast")
@@ -569,8 +617,7 @@ This uses `compile' internally."
                              'face 'hasky-project-version)
                  "\n\n"
                  (propertize "Commands"
-                             'face 'magit-popup-heading)
-                 "\n"))
+                             'face 'magit-popup-heading)))
               (?b "Build"   hasky-stack-build-popup)
               (?i "Init"    hasky-stack-init-popup)
               (?s "Setup"   hasky-stack-setup-popup)
@@ -629,6 +676,26 @@ obviously template name."
        "--bare"
        project-name
        template))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setting up post-compilation magic
+
+(defun hasky-stack--compilation-finish-function (buffer str)
+  "Function that is called when a compilation process in BUFFER finishes.
+
+STR describes how the process finished."
+  (when (and (string-match "^\\*.*-stack\\*$" (buffer-name buffer))
+             (string= str "finished\n"))
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (when (and hasky-stack-auto-open-coverage-reports
+                 (re-search-forward
+                  "^The coverage report for .+'s test-suite \".+\" is available at \\(.*\\)$" nil t))
+        (browse-url (match-string-no-properties 1))))))
+
+(add-to-list 'compilation-finish-functions
+             #'hasky-stack--compilation-finish-function)
 
 (provide 'hasky-stack)
 
