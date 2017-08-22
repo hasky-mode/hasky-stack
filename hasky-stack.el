@@ -213,6 +213,17 @@ failure.  Returned path is guaranteed to have trailing slash."
     (remove "Template"
             (hasky-stack--all-matches "^\\(\\([[:alnum:]]\\|-\\)+\\)"))))
 
+(defun hasky-stack--packages () ;; FIXME this is not going to work!
+  "Return list of all packages in Hackage indices."
+  (mapcar
+   #'f-filename
+   (f-entries
+    (f-expand ".stack/indices/Hackage/packages" "~/") ;; this thing is not
+    ;; untared by stack automatically, we need to deal with actual tar
+    ;; archive somehow. Simplest way would be to untar it manually, then
+    ;; keep checking that the extracted directory is not out-of-date.
+    #'f-directory?)))
+
 (defun hasky-stack--completing-read (prompt &optional collection require-match)
   "Read user's input using `hasky-stack-read-function'.
 
@@ -255,6 +266,7 @@ Finally, if COLLECTION is nil, plain `read-string' is used."
      (cons hasky-stack--project-name
            hasky-stack--project-targets)
      t)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Preparation
@@ -676,6 +688,16 @@ obviously template name."
        "--bare"
        project-name
        template))))
+
+;;;###autoload
+(defun hasky-stack-project-action (package)
+  "Open a popup allowing to install or request information about PACKAGE."
+  (interactive
+   (list (hasky-stack--completing-read
+          "Package: "
+          (hasky-stack--packages)
+          t)))
+  (message "%S" package))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
