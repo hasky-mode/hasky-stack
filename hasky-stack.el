@@ -422,7 +422,7 @@ This uses `compile' internally."
                     (replace-regexp-in-string
                      "[[:space:]]"
                      "-"
-                     hasky-stack--project-name))
+                     hasky-stack--project-name)) ;; FIXME this may be nil
                    "stack"))))
     (compile (apply #'hasky-stack--format-command command args))
     nil))
