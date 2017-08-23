@@ -89,6 +89,9 @@ This is usually set by `hasky-stack--prepare'.")
 
 This is usually set by `hasky-stack--prepare'.")
 
+(defvar hasky-stack--package-action-package nil
+  "This variable is temporarily bound to name of package.")
+
 (defcustom hasky-stack-executable nil
   "Path to Stack executable.
 
@@ -99,9 +102,14 @@ it.
 
 Note that the path is quoted with `shell-quote-argument' before
 being used to compose command line."
-  :tag "Path to Stack Executable"
+  :tag  "Path to Stack Executable"
   :type '(choice (file :must-match t)
                  (const :tag "Use Default" nil)))
+
+(defcustom hasky-stack-config-dir "~/.stack"
+  "Path to Stack configuration directory."
+  :tag  "Path to Stack configuration directory"
+  :type 'directory)
 
 (defcustom hasky-stack-read-function #'completing-read
   "Function to be called when user has to choose from list of alternatives."
@@ -121,6 +129,13 @@ being used to compose command line."
 (defcustom hasky-stack-auto-open-coverage-reports nil
   "Whether to attempt to automatically open coverage report in browser."
   :tag  "Automatically open coverage reports"
+  :type 'boolean)
+
+(defcustom hasky-stack-auto-newest-version nil
+  "Whether to install newest version of package without asking.
+
+This is used in `hasky-stack-project-action'."
+  :tag  "Automatically install newest version"
   :type 'boolean)
 
 
@@ -213,16 +228,65 @@ failure.  Returned path is guaranteed to have trailing slash."
     (remove "Template"
             (hasky-stack--all-matches "^\\(\\([[:alnum:]]\\|-\\)+\\)"))))
 
-(defun hasky-stack--packages () ;; FIXME this is not going to work!
+(defun hasky-stack--index-file ()
+  "Get path to Hackage index file."
+  (f-expand "indices/Hackage/00-index.tar" hasky-stack-config-dir))
+
+(defun hasky-stack--index-dir ()
+  "Get ptah to directory that is to contain unpackaed Hackage index."
+  (file-name-as-directory
+   (f-expand "indices/Hackage/00-index" hasky-stack-config-dir)))
+
+(defun hasky-stack--index-stamp-file ()
+  "Get path to Hackage index time stamp file."
+  (f-expand "ts" (hasky-stack--index-dir)))
+
+(defun hasky-stack--ensure-indices ()
+  "Make sure that we have downloaded and untar-ed Hackage package indices."
+  (let ((index-file (hasky-stack--index-file))
+        (index-dir (hasky-stack--index-dir))
+        (index-stamp (hasky-stack--index-stamp-file)))
+    (unless (f-file? index-file)
+      ;; No indices in place, need to run stack update to get them.
+      (message "Cannot find Hackage indices, trying to download them")
+      (shell-command (concat (hasky-stack--executable) " update")))
+    (if (f-file? index-file)
+        (when (or (not (f-file? index-stamp))
+                  (time-less-p (hasky-stack--mod-time index-stamp)
+                               (hasky-stack--mod-time index-file)))
+          (f-mkdir index-dir)
+          (let ((default-directory index-dir))
+            (message "Extracting Hackage indices, please be patient")
+            (shell-command ;; FIXME probably won't work on Windows
+             (concat "tar -xf " (shell-quote-argument index-file))))
+          (f-touch index-stamp)
+          (message "Finished preparing Hackage indices"))
+      (message "Failed to fetch indices, something is wrong!"))))
+
+(defun hasky-stack--packages ()
   "Return list of all packages in Hackage indices."
+  (hasky-stack--ensure-indices)
   (mapcar
    #'f-filename
-   (f-entries
-    (f-expand ".stack/indices/Hackage/packages" "~/") ;; this thing is not
-    ;; untared by stack automatically, we need to deal with actual tar
-    ;; archive somehow. Simplest way would be to untar it manually, then
-    ;; keep checking that the extracted directory is not out-of-date.
-    #'f-directory?)))
+   (f-entries (hasky-stack--index-dir) #'f-directory?)))
+
+(defun hasky-stack--package-versions (package)
+  "Return list of all available versions of PACKAGE."
+  (mapcar
+   #'f-filename
+   (f-entries (f-expand package (hasky-stack--index-dir))
+              #'f-directory?)))
+
+(defun hasky-stack--package-latest-version (package)
+  "Return latest version of PACKAGE."
+  ;; FIXME this is incorrect
+  (cl-reduce
+   (lambda (x y) (if (string-greaterp x y) x y))
+   (hasky-stack--package-versions package)))
+
+(defun hasky-stack--package-with-version (package version)
+  "Render identifier of PACKAGE with VERSION."
+  (concat package "-" version))
 
 (defun hasky-stack--completing-read (prompt &optional collection require-match)
   "Read user's input using `hasky-stack-read-function'.
@@ -266,6 +330,16 @@ Finally, if COLLECTION is nil, plain `read-string' is used."
      (cons hasky-stack--project-name
            hasky-stack--project-targets)
      t)))
+
+(defun hasky-stack--select-package-version (package)
+  "Present the user with a choice of PACKAGE version."
+  (let ((versions (hasky-stack--package-versions package)))
+    (if hasky-stack-auto-newest-version
+        (hasky-stack--package-latest-version package)
+      (hasky-stack--completing-read
+       (format "Version of %s: " package)
+       (cl-sort versions #'string-greaterp)
+       t))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -649,6 +723,72 @@ This uses `compile' internally."
    hasky-stack--last-directory
    "update"))
 
+(magit-define-popup hasky-stack-project-action-popup
+  "Show project action popup."
+  'hasky-stack
+  :variables `((?a "auto-newest-version"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-newest-version)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-newest-version
+                     "auto newest version")))
+  :options   '((?r "Resolver to use" "--resolver="))
+  :actions   '((?i "Install"      hasky-stack-package-install)
+               (?h "Hackage"      hasky-stack-package-open-hackage)
+               (?s "Stackage"     hasky-stack-package-open-stackage)
+               (?m "Build matrix" hasky-stack-package-open-build-matrix)
+               (?c "Changelog"    hasky-stack-package-open-changelog))
+  :default-action 'hasky-stack-package-install
+  :max-action-columns 3)
+
+(defun hasky-stack-package-install (package version &optional args)
+  "Install PACKAGE of VERSION globally using ARGS."
+  (interactive
+   (list hasky-stack--package-action-package
+         (hasky-stack--select-package-version
+          hasky-stack--package-action-package)
+         (hasky-stack-build-arguments)))
+  (apply
+   #'hasky-stack--exec-command
+   hasky-stack-config-dir
+   "install"
+   (hasky-stack--package-with-version package version)
+   args))
+
+(defun hasky-stack-package-open-hackage (package)
+  "Open Hackage page for PACKAGE."
+  (interactive (list hasky-stack--package-action-package))
+  (browse-url
+   (concat "https://hackage.haskell.org/package/"
+           (url-hexify-string package))))
+
+(defun hasky-stack-package-open-stackage (package)
+  "Open Stackage page for PACKAGE."
+  (interactive (list hasky-stack--package-action-package))
+  (browse-url
+   (concat "https://www.stackage.org/package/"
+           (url-hexify-string package))))
+
+(defun hasky-stack-package-open-build-matrix (package)
+  "Open Hackage build matrix for PACKAGE."
+  (interactive (list hasky-stack--package-action-package))
+  (browse-url
+   (concat "https://matrix.hackage.haskell.org/package/"
+           (url-hexify-string package))))
+
+(defun hasky-stack-package-open-changelog (package)
+  "Open Hackage build matrix for PACKAGE."
+  (interactive (list hasky-stack--package-action-package))
+  (browse-url
+   (concat "https://hackage.haskell.org/package/"
+           (url-hexify-string
+            (hasky-stack--package-with-version
+             package
+             (hasky-stack--package-latest-version package)))
+           "/changelog")))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; High-level interface
@@ -690,14 +830,15 @@ obviously template name."
        template))))
 
 ;;;###autoload
-(defun hasky-stack-project-action (package)
+(defun hasky-stack-package-action (package)
   "Open a popup allowing to install or request information about PACKAGE."
   (interactive
    (list (hasky-stack--completing-read
           "Package: "
           (hasky-stack--packages)
           t)))
-  (message "%S" package))
+  (setq hasky-stack--package-action-package package)
+  (hasky-stack-project-action-popup))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
