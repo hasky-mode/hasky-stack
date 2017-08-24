@@ -410,8 +410,8 @@ Result is expected to be used as argument of `compile'."
             (remove nil args)))
    " "))
 
-(defun hasky-stack--exec-command (dir command &rest args)
-  "Call target as if from DIR performing COMMAND with arguments ARGS.
+(defun hasky-stack--exec-command (package dir command &rest args)
+  "Call stack for PACKAGE as if from DIR performing COMMAND with arguments ARGS.
 
 Arguments are quoted if necessary and NIL arguments are ignored.
 This uses `compile' internally."
@@ -423,7 +423,7 @@ This uses `compile' internally."
                     (replace-regexp-in-string
                      "[[:space:]]"
                      "-"
-                     hasky-stack--project-name)) ;; FIXME this may be nil
+                     (or package "hasky")))
                    "stack"))))
     (compile (apply #'hasky-stack--format-command command args))
     nil))
@@ -506,6 +506,7 @@ This uses `compile' internally."
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "build"
    target
@@ -518,6 +519,7 @@ This uses `compile' internally."
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "bench"
    target
@@ -530,6 +532,7 @@ This uses `compile' internally."
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "test"
    target
@@ -541,6 +544,7 @@ This uses `compile' internally."
    (list (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "haddock"
    args))
@@ -561,6 +565,7 @@ This uses `compile' internally."
    (list (hasky-stack-init-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "init"
    args))
@@ -584,6 +589,7 @@ This uses `compile' internally."
          (hasky-stack-setup-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "setup"
    (unless (string= ghc-version "implied-by-resolver")
@@ -610,6 +616,7 @@ This uses `compile' internally."
    (list (hasky-stack-upgrade-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "upgrade"
    args))
@@ -631,6 +638,7 @@ This uses `compile' internally."
    (list (hasky-stack-upload-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "upload"
    "."
@@ -652,6 +660,7 @@ This uses `compile' internally."
    (list (hasky-stack-sdist-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "sdist"
    args))
@@ -668,6 +677,7 @@ This uses `compile' internally."
         (cons (match-string 1 cmd)
               (match-string 2 cmd)))
     (hasky-stack--exec-command
+     hasky-stack--project-name
      hasky-stack--last-directory
      (if (string= args "")
          (concat "exec " app)
@@ -686,6 +696,7 @@ This uses `compile' internally."
    (list (hasky-stack-clean-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "clean"
    (if (member "--full" args)
@@ -721,6 +732,7 @@ This uses `compile' internally."
   "Execute \"stack update\"."
   (interactive)
   (hasky-stack--exec-command
+   hasky-stack--project-name
    hasky-stack--last-directory
    "update"))
 
@@ -753,6 +765,7 @@ This uses `compile' internally."
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
+   hasky-stack--package-action-package
    hasky-stack-config-dir
    "install"
    (hasky-stack--package-with-version package version)
@@ -823,13 +836,13 @@ obviously template name."
           t)))
   (if (hasky-stack--prepare)
       (message "The directory is already initialized, it seems")
-    (let ((hasky-stack--project-name project-name))
-      (hasky-stack--exec-command
-       default-directory
-       "new"
-       "--bare"
-       project-name
-       template))))
+    (hasky-stack--exec-command
+     project-name
+     default-directory
+     "new"
+     "--bare"
+     project-name
+     template)))
 
 ;;;###autoload
 (defun hasky-stack-package-action (package)
