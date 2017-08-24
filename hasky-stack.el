@@ -261,7 +261,7 @@ failure.  Returned path is guaranteed to have trailing slash."
              (concat "tar -xf " (shell-quote-argument index-file))))
           (f-touch index-stamp)
           (message "Finished preparing Hackage indices"))
-      (message "Failed to fetch indices, something is wrong!"))))
+      (error "%s" "Failed to fetch indices, something is wrong!"))))
 
 (defun hasky-stack--packages ()
   "Return list of all packages in Hackage indices."
@@ -801,7 +801,7 @@ This uses `compile' internally."
       (if (hasky-stack--prepare)
           (hasky-stack-root-popup)
         (message "Cannot locate ‘.cabal’ file"))
-    (message "Cannot locate Stack executable on this system")))
+    (error "%s" "Cannot locate Stack executable on this system")))
 
 ;;;###autoload
 (defun hasky-stack-new (project-name template)
