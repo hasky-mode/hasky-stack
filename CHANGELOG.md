@@ -1,3 +1,10 @@
+## Hasky Stack 0.3.0
+
+* Added the `hasky-stack-package-action` command allowing to install and
+  lookup information about packages.
+
+* Renamed the face `hasky-project-version` to `hasky-stack-project-version`.
+
 ## Hasky Stack 0.2.0
 
 * Fixed the `stack upload` command.
