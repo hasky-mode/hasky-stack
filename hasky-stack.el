@@ -280,12 +280,10 @@ Windows."
    (f-entries (f-expand package (hasky-stack--index-dir))
               #'f-directory?)))
 
-(defun hasky-stack--package-latest-version (package)
-  "Return latest version of PACKAGE."
-  ;; FIXME this is incorrect
-  (cl-reduce
-   (lambda (x y) (if (string-greaterp x y) x y))
-   (hasky-stack--package-versions package)))
+(defun hasky-stack--latest-version (versions)
+  "Return latest version from VERSIONS."
+  (cl-reduce (lambda (x y) (if (version< y x) x y))
+             versions))
 
 (defun hasky-stack--package-with-version (package version)
   "Render identifier of PACKAGE with VERSION."
@@ -338,10 +336,10 @@ Finally, if COLLECTION is nil, plain `read-string' is used."
   "Present the user with a choice of PACKAGE version."
   (let ((versions (hasky-stack--package-versions package)))
     (if hasky-stack-auto-newest-version
-        (hasky-stack--package-latest-version package)
+        (hasky-stack--latest-version versions)
       (hasky-stack--completing-read
        (format "Version of %s: " package)
-       (cl-sort versions #'string-greaterp)
+       (cl-sort versions (lambda (x y) (version< y x)))
        t))))
 
 
@@ -789,7 +787,8 @@ This uses `compile' internally."
            (url-hexify-string
             (hasky-stack--package-with-version
              package
-             (hasky-stack--package-latest-version package)))
+             (hasky-stack--latest-version
+              (hasky-stack--package-versions package))))
            "/changelog")))
 
 
