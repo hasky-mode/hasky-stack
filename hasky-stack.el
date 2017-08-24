@@ -242,7 +242,10 @@ failure.  Returned path is guaranteed to have trailing slash."
   (f-expand "ts" (hasky-stack--index-dir)))
 
 (defun hasky-stack--ensure-indices ()
-  "Make sure that we have downloaded and untar-ed Hackage package indices."
+  "Make sure that we have downloaded and untar-ed Hackage package indices.
+
+This uses external ‘tar’ command, so it probably won't work on
+Windows."
   (let ((index-file (hasky-stack--index-file))
         (index-dir (hasky-stack--index-dir))
         (index-stamp (hasky-stack--index-stamp-file)))
@@ -257,7 +260,7 @@ failure.  Returned path is guaranteed to have trailing slash."
           (f-mkdir index-dir)
           (let ((default-directory index-dir))
             (message "Extracting Hackage indices, please be patient")
-            (shell-command ;; FIXME probably won't work on Windows
+            (shell-command
              (concat "tar -xf " (shell-quote-argument index-file))))
           (f-touch index-stamp)
           (message "Finished preparing Hackage indices"))
@@ -831,7 +834,13 @@ obviously template name."
 
 ;;;###autoload
 (defun hasky-stack-package-action (package)
-  "Open a popup allowing to install or request information about PACKAGE."
+  "Open a popup allowing to install or request information about PACKAGE.
+
+This functionality currently relies on existence of ‘tar’
+command.  This means that it works on Posix systems, but may have
+trouble working on Windows.  Please let me know if you run into
+any issues on Windows and we'll try to work around (I don't have
+a Windows machine)."
   (interactive
    (list (hasky-stack--completing-read
           "Package: "
