@@ -59,7 +59,7 @@
   '((t (:inherit font-lock-function-name-face)))
   "Face used to display name of current project.")
 
-(defface hasky-project-version
+(defface hasky-stack-project-version
   '((t (:inherit font-lock-doc-face)))
   "Face used to display version of current project.")
 
@@ -701,7 +701,7 @@ This uses `compile' internally."
                              'face 'hasky-stack-project-name)
                  " "
                  (propertize hasky-stack--project-version
-                             'face 'hasky-project-version)
+                             'face 'hasky-stack-project-version)
                  "\n\n"
                  (propertize "Commands"
                              'face 'magit-popup-heading)))
