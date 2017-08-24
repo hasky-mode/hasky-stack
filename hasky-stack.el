@@ -144,7 +144,8 @@ This is used in `hasky-stack-project-action'."
 
 (defun hasky-stack--all-matches (regexp)
   "Return list of all stings matching REGEXP in current buffer."
-  (let (matches)
+  (let (matches
+        (case-fold-search t))
     (goto-char (point-min))
     (while (re-search-forward regexp nil t)
       (push (match-string-no-properties 1) matches))
