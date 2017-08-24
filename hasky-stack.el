@@ -191,6 +191,13 @@ This is used by `hasky-stack--prepare'."
               (hasky-stack--all-matches
                "^[[:blank:]]*benchmark[[:blank:]]+\\([[:word:]-]+\\)"))))))
 
+(defun hasky-stack--home-page-from-cabal-file (filename)
+  "Parse package home page from \"*.cabal\" file with FILENAME."
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (car (hasky-stack--all-matches
+          "^[[:blank:]]*homepage:[[:blank:]]+\\(.+\\)"))))
+
 (defun hasky-stack--find-dir-of-file (regexp)
   "Find file whose name satisfies REGEXP traversing upwards.
 
@@ -752,6 +759,7 @@ This uses `compile' internally."
                (?h "Hackage"      hasky-stack-package-open-hackage)
                (?s "Stackage"     hasky-stack-package-open-stackage)
                (?m "Build matrix" hasky-stack-package-open-build-matrix)
+               (?g "Home page"    hasky-stack-package-open-home-page)
                (?c "Changelog"    hasky-stack-package-open-changelog))
   :default-action 'hasky-stack-package-install
   :max-action-columns 3)
@@ -791,6 +799,18 @@ This uses `compile' internally."
   (browse-url
    (concat "https://matrix.hackage.haskell.org/package/"
            (url-hexify-string package))))
+
+(defun hasky-stack-package-open-home-page (package)
+  "Open home page of PACKAGE."
+  (interactive (list hasky-stack--package-action-package))
+  (let* ((versions (hasky-stack--package-versions package))
+         (latest-version (hasky-stack--latest-version versions))
+         (cabal-file (f-join (hasky-stack--index-dir)
+                             package
+                             latest-version
+                             (concat package ".cabal")))
+         (homepage (hasky-stack--home-page-from-cabal-file cabal-file)))
+    (browse-url homepage)))
 
 (defun hasky-stack-package-open-changelog (package)
   "Open Hackage build matrix for PACKAGE."
