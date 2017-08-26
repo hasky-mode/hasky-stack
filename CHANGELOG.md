@@ -1,3 +1,8 @@
+## Hasky Stack 0.4.0
+
+* Added commands to edit Cabal and `stack.yaml` files from the root popup
+  (invoked by `hasky-stack-execute`).
+
 ## Hasky Stack 0.3.0
 
 * Added the `hasky-stack-package-action` command allowing to install and
