@@ -1,3 +1,9 @@
+## Hasky Stack 0.5.0
+
+* Enhanced detection of home page by grabbing git location and
+  reconstructing URL from that. Given that 99% of projects are on GitHub it
+  works fine.
+
 ## Hasky Stack 0.4.0
 
 * Added commands to edit Cabal and `stack.yaml` files from the root popup

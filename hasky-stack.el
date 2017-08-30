@@ -196,8 +196,15 @@ This is used by `hasky-stack--prepare'."
   "Parse package home page from \"*.cabal\" file with FILENAME."
   (with-temp-buffer
     (insert-file-contents filename)
-    (car (hasky-stack--all-matches
-          "^[[:blank:]]*homepage:[[:blank:]]+\\(.+\\)"))))
+    (or
+     (car (hasky-stack--all-matches
+           "^[[:blank:]]*homepage:[[:blank:]]+\\(.+\\)"))
+     (let ((without-scheme
+            (car
+             (hasky-stack--all-matches
+              "^[[:blank:]]*location:[[:blank:]]+.*:\\(.+\\)\\(\\.git\\)?"))))
+       (when without-scheme
+         (concat "https:" without-scheme))))))
 
 (defun hasky-stack--find-dir-of-file (regexp)
   "Find file whose name satisfies REGEXP traversing upwards.
