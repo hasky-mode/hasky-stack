@@ -1,5 +1,8 @@
 ## Hasky Stack 0.5.0
 
+* Added a variable that allows to make Hasky Stack open generated Haddocks
+  automatically.
+
 * Enhanced detection of home page by grabbing git location and
   reconstructing URL from that. Given that 99% of projects are on GitHub it
   works fine.

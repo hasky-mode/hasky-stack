@@ -131,6 +131,11 @@ being used to compose command line."
   :tag  "Automatically open coverage reports"
   :type 'boolean)
 
+(defcustom hasky-stack-auto-open-haddocks nil
+  "Whether to attempt to automatically open Haddocks in browser."
+  :tag  "Automatically open Haddocks"
+  :type 'boolean)
+
 (defcustom hasky-stack-auto-newest-version nil
   "Whether to install newest version of package without asking.
 
@@ -484,7 +489,7 @@ This uses `compile' internally."
                    ,(hasky-stack--acp
                      #'hasky-stack--format-bool-variable
                      'hasky-stack-auto-target
-                     "auto target"))
+                     "Auto target"))
                (?c "auto-open-coverage-reports"
                    ,(hasky-stack--acp
                      #'hasky-stack--cycle-bool-variable
@@ -492,7 +497,15 @@ This uses `compile' internally."
                    ,(hasky-stack--acp
                      #'hasky-stack--format-bool-variable
                      'hasky-stack-auto-open-coverage-reports
-                     "auto open coverage reports")))
+                     "Auto open coverage reports"))
+               (?d "auto-open-haddocks"
+                   ,(hasky-stack--acp
+                     #'hasky-stack--cycle-bool-variable
+                     'hasky-stack-auto-open-haddocks)
+                   ,(hasky-stack--acp
+                     #'hasky-stack--format-bool-variable
+                     'hasky-stack-auto-open-haddocks
+                     "Auto open Haddocks")))
   :switches '((?r "Dry run"           "--dry-run")
               (?t "Pedantic"          "--pedantic")
               (?f "Fast"              "--fast")
@@ -781,7 +794,7 @@ This uses `compile' internally."
                    ,(hasky-stack--acp
                      #'hasky-stack--format-bool-variable
                      'hasky-stack-auto-newest-version
-                     "auto newest version")))
+                     "Auto newest version")))
   :options   '((?r "Resolver to use" "--resolver="))
   :actions   '((?i "Install"      hasky-stack-package-install)
                (?h "Hackage"      hasky-stack-package-open-hackage)
@@ -920,10 +933,24 @@ STR describes how the process finished."
   (when (and (string-match "^\\*.*-stack\\*$" (buffer-name buffer))
              (string= str "finished\n"))
     (with-current-buffer buffer
+      ;; Coverage report
       (goto-char (point-min))
       (when (and hasky-stack-auto-open-coverage-reports
                  (re-search-forward
                   "^The coverage report for .+'s test-suite \".+\" is available at \\(.*\\)$" nil t))
+        (browse-url (match-string-no-properties 1)))
+      ;; Newly generated Haddock
+      (goto-char (point-min))
+      (when (and hasky-stack-auto-open-haddocks
+                 (re-search-forward
+                  "^Documentation created:\n\\(.*\\)$" nil t))
+        (browse-url (f-expand (match-string-no-properties 1)
+                              hasky-stack--last-directory)))
+      ;; Already existing Haddock
+      (goto-char (point-min))
+      (when (and hasky-stack-auto-open-haddocks
+                 (re-search-forward
+                  "^Haddock index for local packages already up to date at:\n\\(.*\\)$" nil t))
         (browse-url (match-string-no-properties 1))))))
 
 (add-to-list 'compilation-finish-functions
