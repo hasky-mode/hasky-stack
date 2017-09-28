@@ -1,3 +1,8 @@
+## Hasky Stack 0.6.0
+
+* Renamed `hasky-stack-project-action-popup` to
+  `hasky-stack-package-action-popup`.
+
 ## Hasky Stack 0.5.0
 
 * Added a variable that allows to make Hasky Stack open generated Haddocks

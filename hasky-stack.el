@@ -139,7 +139,7 @@ being used to compose command line."
 (defcustom hasky-stack-auto-newest-version nil
   "Whether to install newest version of package without asking.
 
-This is used in `hasky-stack-project-action'."
+This is used in `hasky-stack-package-action'."
   :tag  "Automatically install newest version"
   :type 'boolean)
 
@@ -784,8 +784,8 @@ This uses `compile' internally."
     (when stack-yaml-file
       (find-file stack-yaml-file))))
 
-(magit-define-popup hasky-stack-project-action-popup
-  "Show project action popup."
+(magit-define-popup hasky-stack-package-action-popup
+  "Show package action popup."
   'hasky-stack
   :variables `((?a "auto-newest-version"
                    ,(hasky-stack--acp
@@ -920,7 +920,7 @@ a Windows machine)."
           (hasky-stack--packages)
           t)))
   (setq hasky-stack--package-action-package package)
-  (hasky-stack-project-action-popup))
+  (hasky-stack-package-action-popup))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
