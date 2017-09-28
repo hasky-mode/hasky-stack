@@ -1,5 +1,7 @@
 language: c
 
+dist: precise
+
 env:
   matrix:
     - EVM_EMACS=emacs-24.5-travis
