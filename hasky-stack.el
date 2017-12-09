@@ -815,7 +815,7 @@ This uses `compile' internally."
    (list hasky-stack--package-action-package
          (hasky-stack--select-package-version
           hasky-stack--package-action-package)
-         (hasky-stack-build-arguments)))
+         (hasky-stack-package-action-arguments)))
   (apply
    #'hasky-stack--exec-command
    hasky-stack--package-action-package
