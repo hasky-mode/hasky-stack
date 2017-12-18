@@ -1,3 +1,9 @@
+## Hasky Stack 0.7.0
+
+* Fix automatic opening of Haddocks with Stack 1.6.1.
+
+* Fix propagation of arguments in the package action popup.
+
 ## Hasky Stack 0.6.0
 
 * Renamed `hasky-stack-project-action-popup` to
