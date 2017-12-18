@@ -947,7 +947,7 @@ STR describes how the process finished."
       (goto-char (point-min))
       (when (and hasky-stack-auto-open-haddocks
                  (re-search-forward
-                  "^Documentation created:\n\\(.*\\)$" nil t))
+                  "^Documentation created:\n\\(.*\\),$" nil t))
         (browse-url (f-expand (match-string-no-properties 1)
                               hasky-stack--last-directory)))
       ;; Already existing Haddock
