@@ -1,6 +1,6 @@
 ;;; hasky-stack.el --- Interface to the Stack Haskell development tool -*- lexical-binding: t; -*-
 ;;
-;; Copyright © 2017 Mark Karpov <markkarpov92@gmail.com>
+;; Copyright © 2017–2018 Mark Karpov <markkarpov92@gmail.com>
 ;;
 ;; Author: Mark Karpov <markkarpov92@gmail.com>
 ;; URL: https://github.com/hasky-mode/hasky-stack
