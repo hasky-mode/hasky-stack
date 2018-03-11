@@ -519,6 +519,7 @@ This uses `compile' internally."
               (?p "Profile"           "--profile")
               (?c "Coverage"          "--coverage")
               (?b "Copy bins"         "--copy-bins")
+              (?g "Copy compiler tool" "--copy-compiler-tool")
               (?l "Library profiling" "--library-profiling")
               (?e "Executable profiling" "--executable-profiling"))
   :options  '((?o "GHC options"         "--ghc-options=")
