@@ -120,7 +120,7 @@ being used to compose command line."
   :tag  "Completing Function"
   :type '(radio (function-item completing-read)))
 
-(defcustom hasky-stack-ghc-versions '("8.2.2" "8.0.2" "7.10.3" "7.8.4")
+(defcustom hasky-stack-ghc-versions '("8.4.1" "8.2.2" "8.0.2" "7.10.3" "7.8.4")
   "GHC versions to pick from (for commands like \"stack setup\")."
   :tag  "GHC versions"
   :type '(repeat (string :tag "Extension name")))
