@@ -101,8 +101,7 @@ This is usually set by `hasky-stack--prepare'.")
 
 If it's not NIL, this value is used in invocation of Stack
 commands instead of the standard \"stack\" string.  Set this
-variable if your Stack is in a strange place where OS cannot find
-it.
+variable if your Stack is not on PATH.
 
 Note that the path is quoted with `shell-quote-argument' before
 being used to compose command line."
