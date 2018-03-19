@@ -237,10 +237,6 @@ failure.  Returned path is guaranteed to have trailing slash."
     (cond ((executable-find default)     default)
           ((and custom (f-file? custom)) custom))))
 
-(defun hasky-stack--initialized-p (dir)
-  "Return non-NIL value if \"stack.yaml\" file exists in DIR."
-  (f-file? (f-expand "stack.yaml" dir)))
-
 (defun hasky-stack--templates ()
   "Return list of available Stack templates."
   (with-temp-buffer
