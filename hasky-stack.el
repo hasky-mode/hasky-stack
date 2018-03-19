@@ -252,7 +252,7 @@ failure.  Returned path is guaranteed to have trailing slash."
   (f-expand "indices/Hackage/00-index.tar" hasky-stack-config-dir))
 
 (defun hasky-stack--index-dir ()
-  "Get ptah to directory that is to contain unpackaed Hackage index."
+  "Get path to directory that is to contain unpackaed Hackage index."
   (file-name-as-directory
    (f-expand "indices/Hackage/00-index" hasky-stack-config-dir)))
 
