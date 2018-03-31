@@ -1,3 +1,11 @@
+## Hasky Stack 0.8.0
+
+* Make commands like “build → bench” and “build → test” only propose targets
+  that make sense. For example, targets for “build → bench” won't include
+  test suite components.
+
+* Added `--copy-compiler-tool` to build popup.
+
 ## Hasky Stack 0.7.0
 
 * Fix automatic opening of Haddocks with Stack 1.6.1.
