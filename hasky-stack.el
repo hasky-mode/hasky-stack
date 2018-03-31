@@ -732,7 +732,7 @@ This uses `compile' internally."
      (list hasky-stack--project-name))))
 
 (magit-define-popup hasky-stack-root-popup
-  "Show root popup with all the supported commands."
+  "Show root popup with all supported commands."
   'hasky-stack
   :actions  '((lambda ()
                 (concat
