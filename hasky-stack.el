@@ -341,14 +341,23 @@ Finally, if COLLECTION is nil, plain `read-string' is used."
                  (member result collection))
       result)))
 
-(defun hasky-stack--select-target (prompt)
-  "Present the user with a choice of build target using PROMPT."
+(defun hasky-stack--select-target (prompt &optional fragment)
+  "Present the user with a choice of build target using PROMPT.
+
+If given, FRAGMENT will be as a filter so only targets that
+contain this string will be returned."
   (if hasky-stack-auto-target
       hasky-stack--project-name
     (hasky-stack--completing-read
      prompt
      (cons hasky-stack--project-name
-           hasky-stack--project-targets)
+           (if fragment
+               (cl-remove-if
+                (lambda (x)
+                  (not (string-match-p (regexp-quote fragment) x)))
+                hasky-stack--project-targets)
+             hasky-stack--project-targets)
+           )
      t)))
 
 (defun hasky-stack--select-package-version (package)
@@ -543,7 +552,7 @@ This uses `compile' internally."
 (defun hasky-stack-bench (target &optional args)
   "Execute \"stack bench\" command for TARGET with ARGS."
   (interactive
-   (list (hasky-stack--select-target "Bench target: ")
+   (list (hasky-stack--select-target "Bench target: " ":bench:")
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
@@ -556,7 +565,7 @@ This uses `compile' internally."
 (defun hasky-stack-test (target &optional args)
   "Execute \"stack test\" command for TARGET with ARGS."
   (interactive
-   (list (hasky-stack--select-target "Test target: ")
+   (list (hasky-stack--select-target "Test target: " ":test:")
          (hasky-stack-build-arguments)))
   (apply
    #'hasky-stack--exec-command
