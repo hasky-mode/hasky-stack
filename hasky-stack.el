@@ -720,6 +720,24 @@ This uses `compile' internally."
          (concat "exec " app)
        (concat "exec " app " -- " args)))))
 
+(defun hasky-stack-run (cmd)
+  "Execute \"stack run\" command running CMD."
+  (interactive
+   (list (read-string "Command to run: ")))
+  (cl-destructuring-bind (app . args)
+      (progn
+        (string-match
+         "^[[:blank:]]*\\(?1:[^[:blank:]]+\\)[[:blank:]]*\\(?2:.*\\)$"
+         cmd)
+        (cons (match-string 1 cmd)
+              (match-string 2 cmd)))
+    (hasky-stack--exec-command
+     hasky-stack--project-name
+     hasky-stack--last-directory
+     (if (string= args "")
+         (concat "run " app)
+       (concat "run " app " -- " args)))))
+
 (magit-define-popup hasky-stack-clean-popup
   "Show popup for the \"stack clean\" command."
   'hasky-stack
@@ -761,6 +779,7 @@ This uses `compile' internally."
               (?p "Upload"  hasky-stack-upload-popup)
               (?d "SDist"   hasky-stack-sdist-popup)
               (?x "Exec"    hasky-stack-exec)
+              (?r "Run"     hasky-stack-run)
               (?c "Clean"   hasky-stack-clean-popup)
               (?l "Edit Cabal file" hasky-stack-edit-cabal)
               (?y "Edit stack.yaml" hasky-stack-edit-stack-yaml))
