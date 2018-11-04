@@ -1,3 +1,7 @@
+## Hasky Stack 0.9.0
+
+* Added support for the `stack run` command.
+
 ## Hasky Stack 0.8.0
 
 * Make commands like “build → bench” and “build → test” only propose targets
