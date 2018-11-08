@@ -967,19 +967,17 @@ STR describes how the process finished."
                  (re-search-forward
                   "^The coverage report for .+'s test-suite \".+\" is available at \\(.*\\)$" nil t))
         (browse-url (match-string-no-properties 1)))
-      ;; Newly generated Haddock
-      (goto-char (point-min))
-      (when (and hasky-stack-auto-open-haddocks
-                 (re-search-forward
-                  "^Documentation created:\n\\(.*\\),$" nil t))
-        (browse-url (f-expand (match-string-no-properties 1)
-                              hasky-stack--last-directory)))
-      ;; Already existing Haddock
-      (goto-char (point-min))
-      (when (and hasky-stack-auto-open-haddocks
-                 (re-search-forward
-                  "^Haddock index for local packages already up to date at:\n\\(.*\\)$" nil t))
-        (browse-url (match-string-no-properties 1))))))
+      (cl-flet ((open-haddock
+                 (regexp)
+                 (goto-char (point-min))
+                 (when (and hasky-stack-auto-open-haddocks
+                            (re-search-forward regexp nil t))
+                   (browse-url (f-expand (match-string-no-properties 1)
+                                         hasky-stack--last-directory))
+                   t)))
+        (or (open-haddock "^Documentation created:\n\\(.*\\),$")
+            (open-haddock "^Haddock index for local packages already up to date at:\n\\(.*\\)$")
+            (open-haddock "^Updating Haddock index for local packages in\n\\(.*\\)$"))))))
 
 (add-to-list 'compilation-finish-functions
              #'hasky-stack--compilation-finish-function)
