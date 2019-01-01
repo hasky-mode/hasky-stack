@@ -66,6 +66,6 @@ customize-group hasky-stack</kbd>.
 
 ## License
 
-Copyright © 2017–2018 Mark Karpov
+Copyright © 2017–2019 Mark Karpov
 
 Distributed under GNU GPL, version 3.
