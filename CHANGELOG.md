@@ -4,6 +4,9 @@
 
 * Improved automatic opening of generated Haddocks.
 
+* Stack stopped supporting listing of known template names from CLI. Use
+  fixed list configurable as `hasky-stack-templates` instead.
+
 ## Hasky Stack 0.8.0
 
 * Make commands like “build → bench” and “build → test” only propose targets
