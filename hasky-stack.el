@@ -146,6 +146,43 @@ This is used in `hasky-stack-package-action'."
   :tag  "Automatically install newest version"
   :type 'boolean)
 
+(defcustom hasky-stack-templates
+  '("chrisdone"
+    "foundation"
+    "franklinchen"
+    "ghcjs"
+    "ghcjs-old-base"
+    "hakyll-template"
+    "haskeleton"
+    "hspec"
+    "new-template"
+    "protolude"
+    "quickcheck-test-framework"
+    "readme-lhs"
+    "rio"
+    "rubik"
+    "scotty-hello-world"
+    "scotty-hspec-wai"
+    "servant"
+    "servant-docker"
+    "simple"
+    "simple-hpack"
+    "simple-library"
+    "spock"
+    "tasty-discover"
+    "tasty-travis"
+    "unicode-syntax-exe"
+    "unicode-syntax-lib"
+    "yesod-minimal"
+    "yesod-mongo"
+    "yesod-mysql"
+    "yesod-postgres"
+    "yesod-simple"
+    "yesod-sqlite")
+  "List of known templates to choose from when creating new project."
+  :tag "List of known stack templates"
+  :type '(repeat (string :tag "Template name")))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various utilities
@@ -236,16 +273,6 @@ failure.  Returned path is guaranteed to have trailing slash."
         (custom  hasky-stack-executable))
     (cond ((executable-find default)     default)
           ((and custom (f-file? custom)) custom))))
-
-(defun hasky-stack--templates ()
-  "Return list of available Stack templates."
-  (with-temp-buffer
-    (shell-command
-     (format "%s templates"
-             (hasky-stack--executable))
-     (current-buffer))
-    (remove "Template"
-            (hasky-stack--all-matches "^\\(\\([[:alnum:]]\\|-\\)+\\)"))))
 
 (defun hasky-stack--index-file ()
   "Get path to Hackage index file."
@@ -921,7 +948,7 @@ obviously template name."
             default-directory)))
          (hasky-stack--completing-read
           "Use template: "
-          (cons "none" (hasky-stack--templates))
+          (cons "none" hasky-stack-templates)
           t)))
   (if (hasky-stack--prepare)
       (message "The directory is already initialized, it seems")
