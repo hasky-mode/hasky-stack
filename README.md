@@ -7,7 +7,7 @@ altogether in some months.*
 
 [![License GPL 3](https://img.shields.io/badge/license-GPL_3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.txt)
 [![MELPA](https://melpa.org/packages/hasky-stack-badge.svg)](https://melpa.org/#/hasky-stack)
-[![Build Status](https://travis-ci.org/hasky-mode/hasky-stack.svg?branch=master)](https://travis-ci.org/hasky-mode/hasky-stack)
+[![CircleCI](https://circleci.com/gh/hasky-mode/hasky-stack/tree/master.svg?style=svg)](https://circleci.com/gh/hasky-mode/hasky-stack/tree/master)
 
 This is an Emacs interface to the [Stack](https://haskellstack.org) Haskell
 development tool.
